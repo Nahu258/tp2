@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Sistema de Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        input.error {
+            border-color: #c33;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .alert {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .alert-error {
+            background-color: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        .validation-message {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #c33;
+            display: none;
+        }
+        .validation-message.show {
+            display: block;
+        }
+        .link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .link a:hover {
+            text-decoration: underline;
+        }
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-box h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .info-box ul {
+            margin-left: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro de Usuario</h2>
+        <p class="subtitle">Sistema de Control de Acceso por Rol</p>
+        
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        
+        <!-- <div class="info-box">
+            <h3>Roles disponibles:</h3>
+            <ul>
+                <li><strong>Personal:</strong> Solo lectura</li>
+                <li><strong>Jefe de Área:</strong> Lectura y edición</li>
+                <li><strong>Gerente:</strong> Lectura, edición y aprobación</li>
+                <li><strong>Director:</strong> Todos + decisión</li>
+                <li><strong>Supervisor:</strong> Lectura y control</li>
+                <li><strong>Admin del Sistema:</strong> Gestión total</li>
+            </ul>
+        </div> -->
+        
+        <form action="/registro" method="post" id="registroForm">
+            <div class="form-group">
+                <label for="nombreUsuario">Nombre de Usuario</label>
+                <input type="text" id="nombreUsuario" name="nombreUsuario" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="clave">Contraseña</label>
+                <input type="password" id="clave" name="clave" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmarClave">Confirmar Contraseña</label>
+                <input type="password" id="confirmarClave" name="confirmarClave" required>
+                <div class="validation-message" id="errorMessage">
+                    Las contraseñas no coinciden
+                </div>
+            </div>
+            
+            <!-- <div class="form-group">
+                <label for="rolNombre">Rol en la Organización</label>
+                <select id="rolNombre" name="rolNombre" required>
+                    <option value="">Seleccione un rol</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Jefe de Área">Jefe de Área</option>
+                    <option value="Gerente">Gerente</option>
+                    <option value="Director">Director</option>
+                    <option value="Supervisor">Supervisor</option>
+                    <option value="Administrador del Sistema">Administrador del Sistema</option>
+                </select>
+            </div> -->
+            
+            <button type="submit" id="submitBtn">Registrarse</button>
+        </form>
+        
+        <div class="link">
+            <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registroForm');
+        const clave = document.getElementById('clave');
+        const confirmarClave = document.getElementById('confirmarClave');
+        const errorMessage = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function validarContraseñas() {
+            if (confirmarClave.value === '') {
+                confirmarClave.classList.remove('error');
+                errorMessage.classList.remove('show');
+                return true;
+            }
+
+            if (clave.value !== confirmarClave.value) {
+                confirmarClave.classList.add('error');
+                errorMessage.classList.add('show');
+                return false;
+            } else {
+                confirmarClave.classList.remove('error');
+                errorMessage.classList.remove('show');
+                return true;
+            }
+        }
+
+        clave.addEventListener('input', validarContraseñas);
+        confirmarClave.addEventListener('input', validarContraseñas);
+
+        form.addEventListener('submit', function(e) {
+            if (!validarContraseñas()) {
+                e.preventDefault();
+                confirmarClave.focus();
+            }
+        });
+    </script>
+</body>
+</html>

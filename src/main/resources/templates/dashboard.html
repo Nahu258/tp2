@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .welcome {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .welcome h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .welcome p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            color: #333;
+            font-size: 16px;
+        }
+        .permisos-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .permiso-badge {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .autorizacion-box {
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            white-space: pre-line;
+            line-height: 1.8;
+            color: #333;
+            font-size: 15px;
+        }
+        .access-level {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        .access-level h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .access-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .access-item.allowed {
+            border-left: 3px solid #4caf50;
+        }
+        .access-item.denied {
+            border-left: 3px solid #e0e0e0;
+            opacity: 0.5;
+        }
+        .icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        /* Estilos para la tabla de gestión de usuarios */
+        .admin-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .admin-section h3 {
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            margin-bottom: 20px;
+        }
+        .users-table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .users-table thead {
+            background: #667eea;
+            color: white;
+        }
+        .users-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .users-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #333;
+        }
+        .users-table tr:last-child td {
+            border-bottom: none;
+        }
+        .users-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        .rol-select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            width: 100%;
+            max-width: 250px;
+        }
+        .rol-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .rol-select.changed {
+            border-color: #ff9800;
+            background: #fff8e1;
+        }
+        .btn-save {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s, transform 0.2s;
+        }
+        .btn-save:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        .btn-save:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .user-id {
+            color: #999;
+            font-size: 13px;
+        }
+        .current-user-badge {
+            background: #4caf50;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Sistema de Control de Acceso</h1>
+        <a href="/logout">Cerrar Sesión</a>
+    </div>
+    
+    <div class="container">
+        <div class="welcome">
+            <h2>¡Bienvenido al Sistema!</h2>
+            <p>Has iniciado sesión exitosamente</p>
+        </div>
+
+        <!-- Sección de gestión de usuarios (solo para Admin) -->
+        <div th:if="${nombreRol == 'Administrador del Sistema'}" class="card admin-section">
+            <h3>👥 Gestión de Usuarios del Sistema</h3>
+            
+            <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${#lists.size(todosLosUsuarios)}">0</div>
+                    <div class="stat-label">Total de Usuarios</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" th:text="${#lists.size(todosLosRoles)}">0</div>
+                    <div class="stat-label">Roles Disponibles</div>
+                </div>
+            </div>
+
+            <div class="users-table-container">
+                <form action="/admin/actualizar-roles" method="post" id="rolesForm">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Rol Actual</th>
+                                <th>Cambiar Rol</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="user : ${todosLosUsuarios}">
+                                <td>
+                                    <span class="user-id" th:text="'#' + ${user.id}"></span>
+                                </td>
+                                <td>
+                                    <strong th:text="${user.nombreUsuario}"></strong>
+                                    <span th:if="${user.id == usuario.id}" class="current-user-badge">TÚ</span>
+                                </td>
+                                <td th:text="${user.rol.nombre}"></td>
+                                <td>
+                                    <select class="rol-select" 
+                                            th:name="'rol_' + ${user.id}"
+                                            th:data-original="${user.rol.id}"
+                                            th:data-user-id="${user.id}">
+                                        <option th:each="rol : ${todosLosRoles}" 
+                                                th:value="${rol.id}" 
+                                                th:text="${rol.nombre}"
+                                                th:selected="${rol.id == user.rol.id}">
+                                        </option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button type="submit" 
+                                            class="btn-save" 
+                                            th:name="userId" 
+                                            th:value="${user.id}"
+                                            th:data-user-id="${user.id}"
+                                            disabled>
+                                        Guardar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Información del Usuario</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Nombre de Usuario</div>
+                    <div class="info-value" th:text="${usuario.nombreUsuario}"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Rol en la Organización</div>
+                    <div class="info-value" th:text="${nombreRol}"></div>
+                </div>
+            </div>
+            
+            <div class="info-label">Permisos Asignados</div>
+            <div class="permisos-container">
+                <span class="permiso-badge" th:each="permiso : ${permisos}" th:text="${permiso}"></span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🔐 Estado de Autorización</h3>
+            <div class="autorizacion-box" th:text="${autorizacion}"></div>
+            
+            <div class="access-level">
+                <h4>Funcionalidades del Sistema según tu Rol:</h4>
+                
+                <div th:if="${nombreRol == 'Personal'}" class="access-item allowed">
+                    <span class="icon">✓</span>
+                    <span>Consulta de información (LECTURA)</span>
+                </div>
+                
+                <div th:if="${nombreRol == 'Jefe de Área'}" >
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Consulta de información (LECTURA)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Modificación de documentos (EDICIÓN)</span>
+                    </div>
+                </div>
+                
+                <div th:if="${nombreRol == 'Gerente'}">
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Consulta de información (LECTURA)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Modificación de documentos (EDICIÓN)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Aprobación de solicitudes (APROBACIÓN)</span>
+                    </div>
+                </div>
+                
+                <div th:if="${nombreRol == 'Director'}">
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Consulta de información (LECTURA)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Modificación de documentos (EDICIÓN)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Aprobación de solicitudes (APROBACIÓN)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Toma de decisiones estratégicas (DECISIÓN)</span>
+                    </div>
+                </div>
+                
+                <div th:if="${nombreRol == 'Supervisor'}">
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Consulta de información (LECTURA)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Control y supervisión (CONTROL)</span>
+                    </div>
+                </div>
+                
+                <div th:if="${nombreRol == 'Administrador del Sistema'}">
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Gestión completa del sistema (GESTIÓN_TOTAL)</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Administración de usuarios y roles</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Configuración del sistema</span>
+                    </div>
+                    <div class="access-item allowed">
+                        <span class="icon">✓</span>
+                        <span>Acceso total a todas las funcionalidades</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script para habilitar el botón de guardar solo cuando se cambie el rol
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('.rol-select');
+            
+            selects.forEach(select => {
+                select.addEventListener('change', function() {
+                    const originalRol = this.getAttribute('data-original');
+                    const userId = this.getAttribute('data-user-id');
+                    const button = document.querySelector(`button[data-user-id="${userId}"]`);
+                    
+                    if (this.value !== originalRol) {
+                        this.classList.add('changed');
+                        button.disabled = false;
+                    } else {
+                        this.classList.remove('changed');
+                        button.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
