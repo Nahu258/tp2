@@ -26,6 +26,10 @@
         .navbar h1 {
             font-size: 24px;
         }
+        .navbar-actions {
+            display: flex;
+            gap: 10px;
+        }
         .navbar a {
             color: white;
             text-decoration: none;
@@ -283,18 +287,249 @@
             font-size: 14px;
             opacity: 0.9;
         }
+
+        /* NUEVOS ESTILOS PARA AUDITORÍA */
+        .auditoria-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .auditoria-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .auditoria-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .audit-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .audit-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .audit-stat-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .audit-stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .logs-table thead {
+            background: #f9f9f9;
+        }
+        .logs-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .logs-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        .logs-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .log-action {
+            font-weight: 600;
+            color: #667eea;
+        }
+        .log-time {
+            color: #999;
+            font-size: 12px;
+        }
+        .btn-ver-mas {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-ver-mas:hover {
+            background: #5568d3;
+        }
+        .empty-logs {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty-logs-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        .navbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .logout-btn-navbar {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn-navbar:hover {
+            background: rgba(255,255,255,0.3);
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
         <h1>Sistema de Control de Acceso</h1>
-        <a href="/logout">Cerrar Sesión</a>
+        <div class="navbar-actions">
+            <!-- Botón de auditoría para Admin y Supervisor -->
+            <a th:if="${nombreRol == 'Administrador del Sistema' || nombreRol == 'Supervisor'}" 
+               href="/auditoria">📋 Auditoría</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn-navbar">
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
     </div>
     
     <div class="container">
         <div class="welcome">
             <h2>¡Bienvenido al Sistema!</h2>
             <p>Has iniciado sesión exitosamente</p>
+        </div>
+
+        <!-- NUEVA SECCIÓN: Logs de Auditoría (solo para Admin y Supervisor) -->
+        <div th:if="${nombreRol == 'Administrador del Sistema' || nombreRol == 'Supervisor'}" 
+             class="auditoria-section">
+            <h3>
+                <span>📊 Actividad Reciente del Sistema</span>
+            </h3>
+            
+            <!-- Estadísticas rápidas -->
+            <div class="audit-stats">
+                <div class="audit-stat-card">
+                    <div class="audit-stat-number" th:text="${eventosHoy != null ? eventosHoy : 0}">0</div>
+                    <div class="audit-stat-label">Eventos Hoy</div>
+                </div>
+                <div class="audit-stat-card">
+                    <div class="audit-stat-number" th:text="${totalEventos != null ? totalEventos : 0}">0</div>
+                    <div class="audit-stat-label">Total de Eventos</div>
+                </div>
+                <div class="audit-stat-card">
+                    <div class="audit-stat-number" th:text="${usuariosActivos != null ? usuariosActivos : 0}">0</div>
+                    <div class="audit-stat-label">Usuarios Activos</div>
+                </div>
+            </div>
+
+            <!-- Tabla de logs recientes -->
+            <div class="users-table-container">
+                <div th:if="${ultimosEventos != null && !ultimosEventos.isEmpty()}">
+                    <table class="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Recurso</th>
+                                <th>IP</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="evento : ${ultimosEventos}">
+                                <td>
+                                    <span class="log-time" 
+                                          th:text="${#temporals.format(evento.fechaHora, 'dd/MM/yyyy HH:mm:ss')}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong th:text="${evento.usuario.nombreUsuario}">Usuario</strong>
+                                    <span th:if="${evento.usuario.id == usuario.id}" 
+                                          class="current-user-badge">TÚ</span>
+                                </td>
+                                <td>
+                                    <span class="log-action" th:text="${evento.accion}">ACCIÓN</span>
+                                </td>
+                                <td th:text="${evento.recurso != null ? evento.recurso : '-'}">-</td>
+                                <td th:text="${evento.ipAddress != null ? evento.ipAddress : '-'}">-</td>
+                                <td>
+                                    <span th:if="${evento.resultado.name() == 'EXITOSO'}" 
+                                          class="badge badge-success">✓ Exitoso</span>
+                                    <span th:if="${evento.resultado.name() == 'FALLIDO'}" 
+                                          class="badge badge-danger">✗ Fallido</span>
+                                    <span th:if="${evento.resultado.name() == 'BLOQUEADO'}" 
+                                          class="badge badge-warning">⚠ Bloqueado</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <a href="/auditoria" class="btn-ver-mas">Ver todos los eventos →</a>
+                </div>
+                
+                <!-- Mensaje si no hay eventos -->
+                <div th:if="${ultimosEventos == null || ultimosEventos.isEmpty()}" class="empty-logs">
+                    <div class="empty-logs-icon">📭</div>
+                    <p>No hay eventos registrados aún</p>
+                </div>
+            </div>
         </div>
 
         <!-- Sección de gestión de usuarios (solo para Admin) -->
@@ -316,7 +551,7 @@
             </div>
 
             <div class="users-table-container">
-                <form action="/admin/actualizar-roles" method="post" id="rolesForm">
+                <form th:action="@{/admin/actualizar-roles}" method="post" id="rolesForm">
                     <table class="users-table">
                         <thead>
                             <tr>

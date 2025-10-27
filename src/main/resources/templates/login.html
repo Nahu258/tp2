@@ -168,8 +168,8 @@
             Sesión cerrada exitosamente
         </div>
         
-        <!-- Login tradicional -->
-        <form action="/login" method="post">
+        <!-- Login tradicional - CORRECCIÓN AQUÍ -->
+        <form th:action="@{/login}" method="post">
             <div class="form-group">
                 <label for="nombre">Usuario</label>
                 <input type="text" id="nombre" name="nombre" required>

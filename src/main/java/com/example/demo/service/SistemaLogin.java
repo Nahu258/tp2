@@ -13,8 +13,10 @@ import java.util.Optional;
  * Clase SistemaLogin - Controla autenticación y autorización
  * Implementa los métodos según consigna del PDF:
  * - registrarUsuario(usuario)
- * - autenticar(nombre, clave)
  * - autorizar(usuario)
+ * 
+ * NOTA: El método autenticar() ya no es necesario porque 
+ * Spring Security maneja la autenticación automáticamente
  */
 @Service
 public class SistemaLogin {
@@ -34,18 +36,8 @@ public class SistemaLogin {
         return true;
     }
 
-    // Método según consigna: autenticar(nombre, clave)
-    public Usuario autenticar(String nombre, String clave) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByNombreUsuario(nombre);
-        
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-            if (usuario.validarClave(clave)) {
-                return usuario;
-            }
-        }
-        return null;
-    }
+    // ELIMINADO: El método autenticar() ya no es necesario
+    // Spring Security + CustomUserDetailsService manejan la autenticación
 
     // Método según consigna: autorizar(usuario)
     // Polimorfismo: diferentes respuestas según el rol

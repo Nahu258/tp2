@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.model.Auditoria;
 import com.example.demo.model.Rol;
 import com.example.demo.model.Usuario;
 import com.example.demo.repository.UsuarioRepository;
@@ -30,26 +31,36 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Autowired
     private SistemaLogin sistemaLogin;
 
+    @Autowired
+    private AuditoriaService auditoriaService; // ← MOVER AQUÍ AL INICIO
+
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        // Cargar información del proveedor OAuth2
         OAuth2User oauth2User = super.loadUser(userRequest);
-
-        // Obtener información del usuario
-        String provider = userRequest.getClientRegistration().getRegistrationId(); // "google", "github", etc.
-        String email = oauth2User.getAttribute("email");
-        String login = oauth2User.getAttribute("login"); // Para GitHub
         
-        // Crear username único: provider_email o provider_login
+        String provider = userRequest.getClientRegistration().getRegistrationId();
+        String email = oauth2User.getAttribute("email");
+        String login = oauth2User.getAttribute("login");
         String username = provider + "_" + (email != null ? email : login);
-
-        // Buscar o crear usuario en BD
+        
         Usuario usuario = obtenerOCrearUsuario(username, provider);
         
-        // Construir authorities desde el rol del usuario en BD
+        // Registrar login OAuth2 en auditoría
+        try {
+            auditoriaService.registrarEvento(
+                username, 
+                "OAUTH2_LOGIN", 
+                "/oauth2/" + provider,
+                null, // request es null aquí
+                Auditoria.Resultado.EXITOSO,
+                "Autenticación OAuth2 con " + provider
+            );
+        } catch (Exception e) {
+            System.err.println("⚠️ No se pudo registrar auditoría OAuth2: " + e.getMessage());
+        }
+        
         List<GrantedAuthority> authorities = construirAuthorities(usuario);
         
-        // Retornar OAuth2User personalizado con authorities correctas
         String nameAttributeKey = userRequest.getClientRegistration()
             .getProviderDetails()
             .getUserInfoEndpoint()

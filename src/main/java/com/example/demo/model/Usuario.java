@@ -1,7 +1,7 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
  * Clase Usuario - Encapsulación de datos del usuario
@@ -29,16 +29,11 @@ public class Usuario {
     public Usuario() {
     }
 
-    // Constructor para NUEVO usuario (hashea la contraseña)
-    // Usado en registro manual
-    public Usuario(String nombreUsuario, String clave, Rol rol) {
+    // Constructor - AHORA recibe la contraseña YA HASHEADA
+    // La responsabilidad de hashear está en el controlador
+    public Usuario(String nombreUsuario, String claveHasheada, Rol rol) {
         this.nombreUsuario = nombreUsuario;
-        // Solo hashear si la clave no está ya hasheada
-        if (clave != null && !clave.startsWith("$2a$")) {
-            this.clave = BCrypt.hashpw(clave, BCrypt.gensalt());
-        } else {
-            this.clave = clave;
-        }
+        this.clave = claveHasheada; // Ya viene hasheada desde el controlador
         this.rol = rol;
     }
 
@@ -52,15 +47,9 @@ public class Usuario {
         return rol;
     }
 
-    public boolean validarClave(String entradaClave) {
-        // Validar solo si la clave está hasheada
-        if (clave != null && clave.startsWith("$2a$")) {
-            return BCrypt.checkpw(entradaClave, clave);
-        }
-        // Para usuarios OAuth2 que no tienen contraseña real
-        return false;
-    }
-
+    // ELIMINADO: El método validarClave ya no es necesario
+    // Spring Security maneja la validación automáticamente
+    
     // Getters y setters adicionales para JPA
     
     public Long getId() {
