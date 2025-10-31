@@ -58,7 +58,12 @@ public class SecurityConfig {
                                                HttpServletResponse response, 
                                                Authentication authentication) 
                                                throws IOException, ServletException {
-                
+                                            
+                // DEBUG: Verificar authorities
+                System.out.println("🔐 LOGIN EXITOSO");
+                System.out.println("   Usuario: " + authentication.getName());
+                System.out.println("   Authorities: " + authentication.getAuthorities());
+                                            
                 // Registrar login exitoso en auditoría
                 String username = authentication.getName();
                 try {
@@ -146,8 +151,8 @@ public class SecurityConfig {
             // Configuración de autorización
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/registro", "/css/**", "/js/**", "/error").permitAll()
-                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/auditoria/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPERVISOR")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/auditoria/**").hasAnyRole("ADMIN", "SUPERVISOR")
                 .anyRequest().authenticated()
             )
             

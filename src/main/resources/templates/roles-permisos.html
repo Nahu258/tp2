@@ -736,14 +736,15 @@
                 <h3 class="modal-title">Asignar Permisos</h3>
                 <span class="modal-close" onclick="cerrarModal()">&times;</span>
             </div>
-            
+
             <form id="formAsignarPermisos" method="post">
                 <input type="hidden" id="rolIdModal" name="rolId">
-                
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
                 <p style="color: #666; margin-bottom: 20px;">
                     Selecciona los permisos para el rol: <strong id="rolNombreModal"></strong>
                 </p>
-                
+
                 <div class="checkbox-grid">
                     <div th:each="permiso : ${permisos}" class="checkbox-item">
                         <input type="checkbox" 
@@ -757,7 +758,7 @@
                         </label>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 30px; display: flex; gap: 10px;">
                     <button type="submit" class="btn btn-success" style="flex: 1;">
                         💾 Guardar Cambios
@@ -792,32 +793,32 @@
         function abrirModalPermisos(button) {
             const rolId = button.getAttribute('data-rol-id');
             const rolNombre = button.getAttribute('data-rol-nombre');
-            
+
             document.getElementById('modalPermisos').classList.add('active');
             document.getElementById('rolIdModal').value = rolId;
             document.getElementById('rolNombreModal').textContent = rolNombre;
-            
+
             // Configurar acción del formulario
             document.getElementById('formAsignarPermisos').action = '/admin/roles-permisos/roles/' + rolId + '/permisos';
-            
+
             // Obtener permisos actuales del rol
             const roleItem = button.closest('.role-item');
             const permisosBadges = roleItem.querySelectorAll('.permiso-mini-badge');
             const permisosActuales = Array.from(permisosBadges).map(badge => badge.textContent.trim());
-            
+
             console.log('Permisos actuales del rol:', permisosActuales); // ← DEBUG
-            
+
             // Desmarcar todos primero
             document.querySelectorAll('#modalPermisos input[type="checkbox"]').forEach(checkbox => {
                 checkbox.checked = false;
                 updateCheckbox(checkbox);
             });
-            
+
             // Marcar los permisos actuales
             document.querySelectorAll('#modalPermisos .checkbox-item').forEach(item => {
                 const checkbox = item.querySelector('input[type="checkbox"]');
                 const permisoNombre = item.querySelector('.checkbox-text').textContent.trim();
-                
+
                 if (permisosActuales.includes(permisoNombre)) {
                     checkbox.checked = true;
                     updateCheckbox(checkbox);

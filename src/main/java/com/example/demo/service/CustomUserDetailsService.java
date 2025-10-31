@@ -38,6 +38,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         String springRole = mapRoleToSpringRole(roleName);
         authorities.add(new SimpleGrantedAuthority(springRole));
         
+        // DEBUG: Imprimir authorities para verificar
+        System.out.println("🔑 Usuario: " + username + " | Rol: " + springRole);
+        
         // Agregar permisos individuales con prefijo PERM_
         if (usuario.getRol().permisos != null && !usuario.getRol().permisos.isEmpty()) {
             usuario.getRol().permisos.forEach(permiso -> {
@@ -50,6 +53,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .replace("Á", "A")
                     .replace("Ú", "U");
                 authorities.add(new SimpleGrantedAuthority(permisoNormalizado));
+                System.out.println("   ✓ Permiso: " + permisoNormalizado);
             });
         }
 
@@ -67,20 +71,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     
     /**
      * Mapea los nombres de roles de la BD a roles de Spring Security
-     * Basado en tu estructura de BD:
-     * 1. Personal
-     * 2. Jefe de Área
-     * 3. Gerente
-     * 4. Director
-     * 5. Supervisor
-     * 6. Administrador del Sistema
+     * IMPORTANTE: "Administrador del Sistema" SIEMPRE se mapea a ROLE_ADMIN
      */
     private String mapRoleToSpringRole(String dbRoleName) {
         if (dbRoleName == null) {
             return "ROLE_USER";
         }
         
-        switch (dbRoleName) {
+        // Normalizar para eliminar acentos y espacios extras
+        String normalizado = dbRoleName.trim();
+        
+        switch (normalizado) {
             case "Administrador del Sistema":
                 return "ROLE_ADMIN";
             case "Personal":
@@ -94,8 +95,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             case "Supervisor":
                 return "ROLE_SUPERVISOR";
             default:
-                // Para cualquier rol no mapeado, crear uno genérico
-                return "ROLE_" + dbRoleName
+                // Para cualquier rol personalizado, crear uno genérico con ROLE_ prefix
+                String rolGenerico = "ROLE_" + normalizado
                     .toUpperCase()
                     .replace(" ", "_")
                     .replace("Á", "A")
@@ -103,6 +104,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                     .replace("Í", "I")
                     .replace("Ó", "O")
                     .replace("Ú", "U");
+                
+                System.out.println("⚠️ Rol personalizado detectado: " + dbRoleName + " → " + rolGenerico);
+                return rolGenerico;
         }
     }
 }
