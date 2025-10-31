@@ -440,8 +440,12 @@
         <h1>Sistema de Control de Acceso</h1>
         <div class="navbar-actions">
             <!-- Botón de auditoría para Admin y Supervisor -->
-            <a th:if="${nombreRol == 'Administrador del Sistema' || nombreRol == 'Supervisor'}" 
-               href="/auditoria">📋 Auditoría</a>
+            <a th:if="${nombreRol == 'Administrador del Sistema' || nombreRol == 'Supervisor'}" href="/auditoria">
+                📋 Auditoría
+            </a>
+            <a th:if="${nombreRol == 'Administrador del Sistema'}" href="/admin/roles-permisos">
+                🎭 Roles
+            </a>
             <form th:action="@{/logout}" method="post" style="display: inline;">
                 <button type="submit" class="logout-btn-navbar">
                     Cerrar Sesión

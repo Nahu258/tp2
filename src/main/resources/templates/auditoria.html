@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría del Sistema - RBAC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-info h3 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+        
+        .icon-blue { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .icon-green { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+        .icon-yellow { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .icon-purple { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        
+        .filters-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .filters-card h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-control {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .table-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .table-header h3 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .table thead {
+            background: #f9f9f9;
+        }
+        
+        .table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        
+        .table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .action-badge {
+            font-weight: 600;
+            color: #667eea;
+            background: #f0f4ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .timestamp {
+            color: #999;
+            font-size: 13px;
+        }
+        
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .pagination-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .pagination-btn:hover:not(.disabled) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .pagination-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state-text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .ip-badge {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .details-preview {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>📊 Auditoría del Sistema</h1>
+                <p style="color: #666; margin-top: 5px;">
+                    Registro completo de actividades • 
+                    <span th:text="${nombreRol}">Rol</span>
+                </p>
+            </div>
+            <div class="header-actions">
+                <a href="/dashboard" class="btn btn-secondary">← Volver al Dashboard</a>
+                <!-- <a href="/auditoria/exportar?formato=csv" class="btn btn-primary">📥 Exportar CSV</a> -->
+                <a th:href="@{/auditoria/exportar(
+                      formato='csv',
+                      filtroAccion=${filtroAccion},
+                      filtroUsuario=${filtroUsuario},
+                      filtroResultado=${filtroResultado}
+                  )}" 
+                  class="btn btn-primary">
+                    📥 Exportar CSV
+                </a>
+            </div>
+        </div>
+        
+        <!-- Alertas -->
+        <div th:if="${mensaje}" class="alert alert-success">
+            <span>✓</span>
+            <span th:text="${mensaje}"></span>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3 th:text="${totalEventos}">0</h3>
+                    <p>Total de Eventos</p>
+                </div>
+                <div class="stat-icon icon-blue">📋</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3 th:text="${eventosHoy}">0</h3>
+                    <p>Eventos Hoy</p>
+                </div>
+                <div class="stat-icon icon-green">📅</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3 th:text="${totalPaginas}">0</h3>
+                    <p>Páginas Totales</p>
+                </div>
+                <div class="stat-icon icon-yellow">📄</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3 th:text="${paginaActual + 1}">1</h3>
+                    <p>Página Actual</p>
+                </div>
+                <div class="stat-icon icon-purple">🔍</div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="filters-card">
+            <h3>🔎 Filtros de Búsqueda</h3>
+            <form th:action="@{/auditoria}" method="get">
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" 
+                               name="filtroUsuario" 
+                               class="form-control" 
+                               placeholder="Nombre de usuario..."
+                               th:value="${filtroUsuario}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Acción</label>
+                        <select name="filtroAccion" class="form-control">
+                            <option value="">Todas las acciones</option>
+                            <option value="LOGIN_EXITOSO" th:selected="${filtroAccion == 'LOGIN_EXITOSO'}">Login Exitoso</option>
+                            <option value="LOGIN_FALLIDO" th:selected="${filtroAccion == 'LOGIN_FALLIDO'}">Login Fallido</option>
+                            <option value="LOGOUT" th:selected="${filtroAccion == 'LOGOUT'}">Logout</option>
+                            <option value="OAUTH2_LOGIN" th:selected="${filtroAccion == 'OAUTH2_LOGIN'}">OAuth2 Login</option>
+                            <option value="ACCESO_DENEGADO" th:selected="${filtroAccion == 'ACCESO_DENEGADO'}">Acceso Denegado</option>
+                            <option value="CAMBIO_ROL" th:selected="${filtroAccion == 'CAMBIO_ROL'}">Cambio de Rol</option>
+                            <option value="ACCESO_DASHBOARD" th:selected="${filtroAccion == 'ACCESO_DASHBOARD'}">Acceso Dashboard</option>
+                            <option value="ACCESO_AUDITORIA" th:selected="${filtroAccion == 'ACCESO_AUDITORIA'}">Acceso Auditoría</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Resultado</label>
+                        <select name="filtroResultado" class="form-control">
+                            <option value="">Todos los resultados</option>
+                            <option value="EXITOSO" th:selected="${filtroResultado == 'EXITOSO'}">✓ Exitoso</option>
+                            <option value="FALLIDO" th:selected="${filtroResultado == 'FALLIDO'}">✗ Fallido</option>
+                            <option value="BLOQUEADO" th:selected="${filtroResultado == 'BLOQUEADO'}">⚠ Bloqueado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Registros por página</label>
+                        <select name="size" class="form-control">
+                            <option value="10">10 registros</option>
+                            <option value="20" selected>20 registros</option>
+                            <option value="50">50 registros</option>
+                            <option value="100">100 registros</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+                    <a href="/auditoria" class="btn btn-secondary">🔄 Limpiar Filtros</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Tabla de Eventos -->
+        <div class="table-card">
+            <div class="table-header">
+                <h3>Registro de Eventos</h3>
+                <span class="badge badge-info" th:text="'Mostrando ' + ${#lists.size(eventos)} + ' de ' + ${totalEventos} + ' eventos'">
+                    Mostrando eventos
+                </span>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(eventos)}" class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-text">No se encontraron eventos</div>
+                <p style="color: #999; margin-top: 10px;">Intenta ajustar los filtros de búsqueda</p>
+            </div>
+            
+            <table class="table" th:if="${!#lists.isEmpty(eventos)}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha y Hora</th>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Recurso</th>
+                        <th>IP</th>
+                        <th>Estado</th>
+                        <th>Detalles</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="evento : ${eventos}">
+                        <td>
+                            <span style="color: #999; font-weight: 600;" th:text="'#' + ${evento.id}"></span>
+                        </td>
+                        <td>
+                            <div class="timestamp" th:text="${#temporals.format(evento.fechaHora, 'dd/MM/yyyy')}"></div>
+                            <div style="font-weight: 600; color: #333;" th:text="${#temporals.format(evento.fechaHora, 'HH:mm:ss')}"></div>
+                        </td>
+                        <td>
+                            <div class="user-badge">
+                                <div class="user-avatar" th:text="${#strings.substring(evento.usuario.nombreUsuario, 0, 1).toUpperCase()}">U</div>
+                                <strong th:text="${evento.usuario.nombreUsuario}">Usuario</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="action-badge" th:text="${evento.accion}">ACCIÓN</span>
+                        </td>
+                        <td>
+                            <span style="font-size: 13px; color: #666;" th:text="${evento.recurso != null ? evento.recurso : '-'}">-</span>
+                        </td>
+                        <td>
+                            <span class="ip-badge" th:text="${evento.ipAddress != null ? evento.ipAddress : '-'}">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${evento.resultado.name() == 'EXITOSO'}" class="badge badge-success">✓ Exitoso</span>
+                            <span th:if="${evento.resultado.name() == 'FALLIDO'}" class="badge badge-danger">✗ Fallido</span>
+                            <span th:if="${evento.resultado.name() == 'BLOQUEADO'}" class="badge badge-warning">⚠ Bloqueado</span>
+                        </td>
+                        <td>
+                            <div class="details-preview" th:text="${evento.detalles != null ? evento.detalles : '-'}" th:title="${evento.detalles}">-</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <!-- Paginación -->
+            <div class="pagination" th:if="${totalPaginas > 1}">
+                <a th:href="@{/auditoria(page=0, size=20, filtroAccion=${filtroAccion}, filtroUsuario=${filtroUsuario}, filtroResultado=${filtroResultado})}" 
+                   class="pagination-btn"
+                   th:classappend="${paginaActual == 0} ? 'disabled' : ''">
+                    « Primera
+                </a>
+                
+                <a th:href="@{/auditoria(page=${paginaActual - 1}, size=20, filtroAccion=${filtroAccion}, filtroUsuario=${filtroUsuario}, filtroResultado=${filtroResultado})}" 
+                   class="pagination-btn"
+                   th:classappend="${paginaActual == 0} ? 'disabled' : ''">
+                    ‹ Anterior
+                </a>
+                
+                <span class="pagination-info">
+                    Página <strong th:text="${paginaActual + 1}">1</strong> de <strong th:text="${totalPaginas}">10</strong>
+                </span>
+                
+                <a th:href="@{/auditoria(page=${paginaActual + 1}, size=20, filtroAccion=${filtroAccion}, filtroUsuario=${filtroUsuario}, filtroResultado=${filtroResultado})}" 
+                   class="pagination-btn"
+                   th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
+                    Siguiente ›
+                </a>
+                
+                <a th:href="@{/auditoria(page=${totalPaginas - 1}, size=20, filtroAccion=${filtroAccion}, filtroUsuario=${filtroUsuario}, filtroResultado=${filtroResultado})}" 
+                   class="pagination-btn"
+                   th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
+                    Última »
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Roles y Permisos - RBAC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .tabs-header {
+            display: flex;
+            background: #f9f9f9;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .tab-button:hover {
+            background: #f0f0f0;
+        }
+        
+        .tab-button.active {
+            color: #667eea;
+            background: white;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        
+        .card {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .card h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Lista de roles */
+        .roles-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .role-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .role-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .role-item.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .role-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .role-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .role-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .role-badge.protected {
+            background: #f59e0b;
+        }
+        
+        .role-info {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        
+        .role-permisos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .permiso-mini-badge {
+            background: #e0e7ff;
+            color: #4c1d95;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .role-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Checkbox Grid */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .checkbox-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .checkbox-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            /* display: none; */
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .checkbox-item input[type="checkbox"]:checked + label {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .checkbox-item input[type="checkbox"]:checked ~ .checkbox-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .checkbox-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .checkbox-text {
+            font-size: 14px;
+            color: #333;
+        }
+        
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table thead {
+            background: #f9f9f9;
+        }
+        
+        .table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+        
+        .table tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .modal-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .stats-mini {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .stat-mini {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-mini-number {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .stat-mini-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>🎭 Gestión de Roles y Permisos</h1>
+                <p style="color: #666; margin-top: 5px;">
+                    Sistema RBAC dinámico • 
+                    <span th:text="${nombreRol}">Admin</span>
+                </p>
+            </div>
+            <a href="/dashboard" class="btn btn-secondary">← Volver al Dashboard</a>
+        </div>
+        
+        <!-- Alertas -->
+        <div th:if="${mensaje}" class="alert alert-success">
+            <span>✓</span>
+            <span th:text="${mensaje}"></span>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-error">
+            <span>✗</span>
+            <span th:text="${error}"></span>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-button active" onclick="switchTab('roles')">
+                    🎭 Roles
+                </button>
+                <button class="tab-button" onclick="switchTab('permisos')">
+                    🔐 Permisos
+                </button>
+            </div>
+            
+            <!-- TAB: ROLES -->
+            <div id="tab-roles" class="tab-content active">
+                <div class="stats-mini">
+                    <div class="stat-mini">
+                        <div class="stat-mini-number" th:text="${#lists.size(roles)}">0</div>
+                        <div class="stat-mini-label">Total de Roles</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-number" th:text="${#lists.size(permisos)}">0</div>
+                        <div class="stat-mini-label">Permisos Disponibles</div>
+                    </div>
+                </div>
+                
+                <div class="grid" style="margin-top: 30px;">
+                    <!-- Crear Rol -->
+                    <div class="card">
+                        <h3>➕ Crear Nuevo Rol</h3>
+                        <form th:action="@{/admin/roles-permisos/roles/crear}" method="post">
+                            <div class="form-group">
+                                <label class="form-label">Nombre del Rol</label>
+                                <input type="text" 
+                                       name="nombre" 
+                                       class="form-control" 
+                                       placeholder="Ej: Contador, Vendedor, etc."
+                                       required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                ➕ Crear Rol
+                            </button>
+                        </form>
+                        
+                        <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                            <h3>💡 Ayuda</h3>
+                            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
+                                <strong>Roles del sistema</strong> (no se pueden eliminar):<br>
+                                • Personal, Jefe de Área, Gerente<br>
+                                • Director, Supervisor, Administrador<br><br>
+                                Puedes crear roles personalizados y asignarles permisos específicos.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Roles -->
+                    <div class="card">
+                        <h3>📋 Roles Existentes</h3>
+                        <div class="roles-list">
+                            <div th:if="${#lists.isEmpty(roles)}" class="empty-state">
+                                <div class="empty-icon">📭</div>
+                                <p>No hay roles registrados</p>
+                            </div>
+                            
+                            <div th:each="rol : ${roles}" class="role-item">
+                            
+                                <div class="role-header">
+                                    <span class="role-name" th:text="${rol.nombre}">Nombre del Rol</span>
+                                    <span th:if="${rol.esProtegido}" class="role-badge protected">
+                                        Sistema
+                                    </span>
+                                    <span th:unless="${rol.esProtegido}" class="role-badge">
+                                        Personalizado
+                                    </span>
+                                </div>
+                                
+                                <div class="role-info">
+                                    <span th:text="${rol.cantidadPermisos} + ' permiso(s) asignado(s)'"></span>
+                                </div>
+                                
+                                <div class="role-permisos">
+                                    <span th:each="permiso : ${rol.permisos}" 
+                                          class="permiso-mini-badge" 
+                                          th:text="${permiso}">
+                                        PERMISO
+                                    </span>
+                                    <span th:if="${rol.cantidadPermisos == 0}" 
+                                          style="color: #999; font-size: 13px;">
+                                        Sin permisos asignados
+                                    </span>
+                                </div>
+                                
+                                <div class="role-actions">
+                                    <button class="btn btn-primary btn-sm" 
+                                            th:data-rol-id="${rol.id}" 
+                                            th:data-rol-nombre="${rol.nombre}"
+                                            onclick="abrirModalPermisos(this)">
+                                        ✏️ Asignar Permisos
+                                    </button>
+                                    
+                                    <form th:action="@{/admin/roles-permisos/roles/eliminar/{id}(id=${rol.id})}" 
+                                          method="post" 
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Estás seguro de eliminar este rol?');"
+                                          th:unless="${rol.esProtegido}">
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            🗑️ Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB: PERMISOS -->
+            <div id="tab-permisos" class="tab-content">
+                <div class="grid">
+                    <!-- Crear Permiso -->
+                    <div class="card">
+                        <h3>➕ Crear Nuevo Permiso</h3>
+                        <form th:action="@{/admin/roles-permisos/permisos/crear}" method="post">
+                            <div class="form-group">
+                                <label class="form-label">Nombre del Permiso</label>
+                                <input type="text" 
+                                       name="nombre" 
+                                       class="form-control" 
+                                       placeholder="Ej: CREAR_FACTURAS, VER_REPORTES"
+                                       required>
+                                <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                                    Se convertirá a mayúsculas: "crear facturas" → "CREAR_FACTURAS"
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                ➕ Crear Permiso
+                            </button>
+                        </form>
+                        
+                        <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
+                            <h3>💡 Ayuda</h3>
+                            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-top: 10px;">
+                                <strong>Permisos del sistema</strong> (no se pueden eliminar):<br>
+                                • LECTURA, EDICIÓN, APROBACIÓN<br>
+                                • DECISIÓN, CONTROL, GESTIÓN_TOTAL<br><br>
+                                Crea permisos granulares como:<br>
+                                • VER_REPORTES_FINANCIEROS<br>
+                                • CREAR_USUARIOS<br>
+                                • APROBAR_GASTOS
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Permisos -->
+                    <div class="card">
+                        <h3>📋 Permisos Existentes</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre del Permiso</th>
+                                    <th>Tipo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(permisos)}">
+                                    <td colspan="4" class="empty-state">
+                                        <div class="empty-icon">📭</div>
+                                        <p>No hay permisos registrados</p>
+                                    </td>
+                                </tr>
+                                
+                                <tr th:each="permiso : ${permisos}">
+                                    <td>
+                                        <span style="color: #999; font-weight: 600;" th:text="'#' + ${permiso.id}"></span>
+                                    </td>
+                                    <td>
+                                        <strong th:text="${permiso.nombre}">PERMISO</strong>
+                                    </td>
+                                    <td>
+                                        <span th:if="${permiso.nombre == 'LECTURA' || permiso.nombre == 'EDICIÓN' || 
+                                                       permiso.nombre == 'APROBACIÓN' || permiso.nombre == 'DECISIÓN' || 
+                                                       permiso.nombre == 'CONTROL' || permiso.nombre == 'GESTIÓN_TOTAL'}" 
+                                              class="badge badge-info">
+                                            Sistema
+                                        </span>
+                                        <span th:unless="${permiso.nombre == 'LECTURA' || permiso.nombre == 'EDICIÓN' || 
+                                                          permiso.nombre == 'APROBACIÓN' || permiso.nombre == 'DECISIÓN' || 
+                                                          permiso.nombre == 'CONTROL' || permiso.nombre == 'GESTIÓN_TOTAL'}" 
+                                              class="badge" style="background: #e0e7ff; color: #4c1d95;">
+                                            Personalizado
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form th:action="@{/admin/roles-permisos/permisos/eliminar/{id}(id=${permiso.id})}" 
+                                              method="post" 
+                                              style="display: inline;"
+                                              onsubmit="return confirm('¿Estás seguro de eliminar este permiso?');"
+                                              th:if="${permiso.nombre != 'LECTURA' && permiso.nombre != 'EDICIÓN' && 
+                                                      permiso.nombre != 'APROBACIÓN' && permiso.nombre != 'DECISIÓN' && 
+                                                      permiso.nombre != 'CONTROL' && permiso.nombre != 'GESTIÓN_TOTAL'}">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                🗑️ Eliminar
+                                            </button>
+                                        </form>
+                                        <span th:if="${permiso.nombre == 'LECTURA' || permiso.nombre == 'EDICIÓN' || 
+                                                      permiso.nombre == 'APROBACIÓN' || permiso.nombre == 'DECISIÓN' || 
+                                                      permiso.nombre == 'CONTROL' || permiso.nombre == 'GESTIÓN_TOTAL'}" 
+                                              style="color: #999; font-size: 12px;">
+                                            Protegido
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal: Asignar Permisos -->
+    <div id="modalPermisos" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Asignar Permisos</h3>
+                <span class="modal-close" onclick="cerrarModal()">&times;</span>
+            </div>
+            
+            <form id="formAsignarPermisos" method="post">
+                <input type="hidden" id="rolIdModal" name="rolId">
+                
+                <p style="color: #666; margin-bottom: 20px;">
+                    Selecciona los permisos para el rol: <strong id="rolNombreModal"></strong>
+                </p>
+                
+                <div class="checkbox-grid">
+                    <div th:each="permiso : ${permisos}" class="checkbox-item">
+                        <input type="checkbox" 
+                               th:id="'permiso_' + ${permiso.id}" 
+                               th:value="${permiso.id}" 
+                               name="permisos"
+                               onchange="updateCheckbox(this)">
+                        <label class="checkbox-label" th:for="'permiso_' + ${permiso.id}">
+                            <div class="checkbox-icon">✓</div>
+                            <span class="checkbox-text" th:text="${permiso.nombre}">PERMISO</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                        💾 Guardar Cambios
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Cambiar entre tabs
+        function switchTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Desactivar todos los botones
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar el tab seleccionado
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Abrir modal de asignación de permisos
+        function abrirModalPermisos(button) {
+            const rolId = button.getAttribute('data-rol-id');
+            const rolNombre = button.getAttribute('data-rol-nombre');
+            
+            document.getElementById('modalPermisos').classList.add('active');
+            document.getElementById('rolIdModal').value = rolId;
+            document.getElementById('rolNombreModal').textContent = rolNombre;
+            
+            // Configurar acción del formulario
+            document.getElementById('formAsignarPermisos').action = '/admin/roles-permisos/roles/' + rolId + '/permisos';
+            
+            // Obtener permisos actuales del rol
+            const roleItem = button.closest('.role-item');
+            const permisosBadges = roleItem.querySelectorAll('.permiso-mini-badge');
+            const permisosActuales = Array.from(permisosBadges).map(badge => badge.textContent.trim());
+            
+            console.log('Permisos actuales del rol:', permisosActuales); // ← DEBUG
+            
+            // Desmarcar todos primero
+            document.querySelectorAll('#modalPermisos input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+                updateCheckbox(checkbox);
+            });
+            
+            // Marcar los permisos actuales
+            document.querySelectorAll('#modalPermisos .checkbox-item').forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const permisoNombre = item.querySelector('.checkbox-text').textContent.trim();
+                
+                if (permisosActuales.includes(permisoNombre)) {
+                    checkbox.checked = true;
+                    updateCheckbox(checkbox);
+                }
+            });
+        }
+        
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('modalPermisos').classList.remove('active');
+        }
+        
+        // Actualizar visualización del checkbox
+        function updateCheckbox(checkbox) {
+            const icon = checkbox.parentElement.querySelector('.checkbox-icon');
+            const text = checkbox.parentElement.querySelector('.checkbox-text');
+            
+            if (checkbox.checked) {
+                icon.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                icon.style.color = 'white';
+                icon.style.borderColor = 'transparent';
+                text.style.color = '#667eea';
+                text.style.fontWeight = '700';
+            } else {
+                icon.style.background = 'white';
+                icon.style.color = 'transparent';
+                icon.style.borderColor = '#e0e0e0';
+                text.style.color = '#333';
+                text.style.fontWeight = '400';
+            }
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalPermisos').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
+        
+        // Inicializar checkboxes al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                updateCheckbox(checkbox);
+            });
+        });
+    </script>
+</body>
+</html>

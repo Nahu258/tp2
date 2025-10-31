@@ -20,7 +20,7 @@ public class Rol {
     @Column(nullable = false, unique = true)
     public String nombre;
     
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY) // ← CAMBIAR A LAZY
     @JoinTable(
         name = "rol_permisos",
         joinColumns = @JoinColumn(name = "rol_id"),
