@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -121,16 +122,47 @@ public class SecurityConfig {
                                                HttpServletResponse response, 
                                                Authentication authentication) 
                                                throws IOException, ServletException {
+                                            
+                // ✅ CORREGIR: Obtener el username correcto desde la BD
+                String oauthName = authentication.getName(); // Este es el "sub" o ID de Google
+                System.out.println("🔍 OAuth2 Success Handler:");
+                System.out.println("   authentication.getName(): " + oauthName);
+                System.out.println("   authentication.getPrincipal(): " + authentication.getPrincipal().getClass());
+                                            
+                // Obtener el email u otra info del principal
+                String username = oauthName;
+                                            
+                if (authentication.getPrincipal() instanceof OAuth2User) {
+                    OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
+                    String email = oauth2User.getAttribute("email");
+                    String login = oauth2User.getAttribute("login");
+                    
+                    System.out.println("   Email: " + email);
+                    System.out.println("   Login: " + login);
+                    
+                    // ✅ Reconstruir el username como lo hicimos en CustomOAuth2UserService
+                    // Detectar provider (Google o GitHub)
+                    String provider = "google"; // default
+                    if (login != null && email == null) {
+                        provider = "github";
+                    }
+                    
+                    if ("google".equals(provider) && email != null) {
+                        username = "google_" + email;
+                    } else if ("github".equals(provider) && login != null) {
+                        username = "github_" + login;
+                    }
+                }
+                
+                System.out.println("   ✅ Username final para auditoría: " + username);
                 
                 // Registrar login OAuth2 exitoso
-                String username = authentication.getName();
-                String provider = "OAuth2";
-                
                 try {
-                    auditoriaService.registrarLoginOAuth2(username, provider, request);
+                    auditoriaService.registrarLoginOAuth2(username, "OAuth2", request);
                     System.out.println("✓ OAUTH2 LOGIN EXITOSO: " + username + " desde " + request.getRemoteAddr());
                 } catch (Exception e) {
                     System.err.println("⚠️ Error al registrar auditoría OAuth2: " + e.getMessage());
+                    e.printStackTrace();
                 }
                 
                 // Redirigir al dashboard

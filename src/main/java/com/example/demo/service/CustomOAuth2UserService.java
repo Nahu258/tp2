@@ -36,66 +36,138 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = super.loadUser(userRequest);
-        
-        String provider = userRequest.getClientRegistration().getRegistrationId();
-        String email = oauth2User.getAttribute("email");
-        String login = oauth2User.getAttribute("login");
-        String username = provider + "_" + (email != null ? email : login);
-        
-        Usuario usuario = obtenerOCrearUsuario(username, provider);
-        
-        // Registrar login OAuth2 en auditoría
         try {
-            auditoriaService.registrarEvento(
-                username, 
-                "OAUTH2_LOGIN", 
-                "/oauth2/" + provider,
-                null, // request es null aquí
-                Auditoria.Resultado.EXITOSO,
-                "Autenticación OAuth2 con " + provider
-            );
-        } catch (Exception e) {
-            System.err.println("⚠️ No se pudo registrar auditoría OAuth2: " + e.getMessage());
-        }
-        
-        List<GrantedAuthority> authorities = construirAuthorities(usuario);
-        
-        String nameAttributeKey = userRequest.getClientRegistration()
-            .getProviderDetails()
-            .getUserInfoEndpoint()
-            .getUserNameAttributeName();
+            OAuth2User oauth2User = super.loadUser(userRequest);
             
-        return new DefaultOAuth2User(
-            authorities,
-            oauth2User.getAttributes(),
-            nameAttributeKey != null ? nameAttributeKey : "sub"
-        );
+            String provider = userRequest.getClientRegistration().getRegistrationId();
+            
+            // ✅ CORREGIR: Obtener atributos según el proveedor
+            String email = oauth2User.getAttribute("email");
+            String login = oauth2User.getAttribute("login"); // GitHub
+            String name = oauth2User.getAttribute("name");
+            String sub = oauth2User.getAttribute("sub"); // Google ID
+            
+            // ✅ DEBUG: Ver qué datos llegan
+            System.out.println("🔍 OAUTH2 DEBUG:");
+            System.out.println("   Provider: " + provider);
+            System.out.println("   Email: " + email);
+            System.out.println("   Login: " + login);
+            System.out.println("   Name: " + name);
+            System.out.println("   Sub (ID): " + sub);
+            
+            // ✅ IMPORTANTE: Construir username de forma consistente
+            String username;
+            String displayName;
+            
+            if ("google".equals(provider)) {
+                // Para Google, SIEMPRE usar el email
+                if (email == null || email.isEmpty()) {
+                    throw new OAuth2AuthenticationException("Google no proporcionó el email");
+                }
+                username = email;
+                displayName = name != null ? name : email;
+                
+            } else if ("github".equals(provider)) {
+                // Para GitHub, usar el login
+                if (login == null || login.isEmpty()) {
+                    throw new OAuth2AuthenticationException("GitHub no proporcionó el login");
+                }
+                username = "github_" + login;
+                displayName = name != null ? name : login;
+                
+            } else {
+                // Para otros proveedores
+                username = provider + "_" + (email != null ? email : sub);
+                displayName = name != null ? name : username;
+            }
+            
+            System.out.println("   ✅ Username generado: " + username);
+            
+            // Obtener o crear usuario
+            Usuario usuario = obtenerOCrearUsuario(username, provider, displayName);
+            System.out.println("   ✅ Usuario obtenido/creado: " + usuario.getNombreUsuario());
+            System.out.println("   ✅ Usuario ID en BD: " + usuario.getId());
+            
+            // Registrar login OAuth2 en auditoría
+            try {
+                auditoriaService.registrarEvento(
+                    username, // ✅ Usar el username completo, no el sub
+                    "OAUTH2_LOGIN", 
+                    "/oauth2/" + provider,
+                    null,
+                    Auditoria.Resultado.EXITOSO,
+                    "Autenticación OAuth2 con " + provider + " - " + displayName
+                );
+                System.out.println("   ✅ Auditoría registrada correctamente");
+            } catch (Exception e) {
+                System.err.println("   ⚠️ No se pudo registrar auditoría OAuth2: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            // Construir authorities
+            List<GrantedAuthority> authorities = construirAuthorities(usuario);
+            System.out.println("   ✅ Authorities: " + authorities);
+            
+            // Obtener el atributo clave para el nombre
+            String nameAttributeKey = userRequest.getClientRegistration()
+                .getProviderDetails()
+                .getUserInfoEndpoint()
+                .getUserNameAttributeName();
+            
+            // String finalNameKey = nameAttributeKey != null && !nameAttributeKey.isEmpty() ? nameAttributeKey : "sub";
+            String finalNameKey = "google".equals(provider) ? "email" : nameAttributeKey;
+            System.out.println("   ✅ Name attribute key: " + finalNameKey);
+                
+            return new DefaultOAuth2User(
+                authorities,
+                oauth2User.getAttributes(), 
+                finalNameKey
+            );
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR EN OAUTH2 SERVICE: " + e.getMessage());
+            e.printStackTrace();
+            throw new OAuth2AuthenticationException("Error al procesar usuario OAuth2: " + e.getMessage());
+        }
     }
     
     /**
      * Obtiene un usuario existente o crea uno nuevo con rol Personal
      */
-    private Usuario obtenerOCrearUsuario(String username, String provider) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByNombreUsuario(username);
-        
-        if (usuarioOpt.isPresent()) {
-            return usuarioOpt.get();
+    private Usuario obtenerOCrearUsuario(String username, String provider, String displayName) {
+        try {
+            Optional<Usuario> usuarioOpt = usuarioRepository.findByNombreUsuario(username);
+
+            if (usuarioOpt.isPresent()) {
+                System.out.println("   ✅ Usuario existente encontrado: " + username);
+                return usuarioOpt.get();
+            }
+
+            System.out.println("   ➕ Creando nuevo usuario OAuth2: " + username);
+
+            // Crear nuevo usuario con rol Personal por defecto
+            Optional<Rol> rolPersonal = sistemaLogin.obtenerRolPorNombre("Personal");
+
+            if (rolPersonal.isEmpty()) {
+                System.err.println("   ❌ Rol 'Personal' no encontrado en la BD");
+                throw new OAuth2AuthenticationException("No se pudo asignar rol al usuario OAuth2");
+            }
+
+            Usuario nuevoUsuario = new Usuario();
+            nuevoUsuario.setNombreUsuario(username);
+            nuevoUsuario.setClave("OAUTH2_USER_" + provider); // No se usa para autenticación
+            nuevoUsuario.setRol(rolPersonal.get());
+
+            Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
+            System.out.println("   ✅ Usuario OAuth2 creado exitosamente: " + usuarioGuardado.getId());
+
+            return usuarioGuardado;
+
+        } catch (Exception e) {
+            System.err.println("   ❌ Error al obtener/crear usuario: " + e.getMessage());
+            e.printStackTrace();
+            throw new OAuth2AuthenticationException("Error al crear usuario: " + e.getMessage());
         }
-        
-        // Crear nuevo usuario con rol Personal por defecto
-        Optional<Rol> rolPersonal = sistemaLogin.obtenerRolPorNombre("Personal");
-        
-        if (rolPersonal.isEmpty()) {
-            throw new OAuth2AuthenticationException("No se pudo asignar rol al usuario OAuth2");
-        }
-        
-        Usuario nuevoUsuario = new Usuario();
-        nuevoUsuario.setNombreUsuario(username);
-        nuevoUsuario.setClave("OAUTH2_USER_" + provider); // No se usa para autenticación
-        nuevoUsuario.setRol(rolPersonal.get());
-        
-        return usuarioRepository.save(nuevoUsuario);
     }
     
     /**
